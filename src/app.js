@@ -19,6 +19,10 @@ const eventService = new EventService();
 const assetService = new AssetService(eventService);
 const userService = new UserService(eventService);
 
+//TODO split routes into respective modules
+//TODO add update/PUT routes
+//TODO add flag for small projections, for large lists
+
 app.post('/asset',
     body('name').isString().isLength({ min: 1, max: 256 }),
     body('description').isString().isLength({ min: 0, max: 256 }),
