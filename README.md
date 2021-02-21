@@ -10,6 +10,6 @@ Searching by name and pagination for Users and Assets.
 
 
 ### TODO List
-- [] split routes into respective modules
-- [] add PUT/update routes for assets and users
-- [] add params to use small projection for pagination
+- [ ] split routes into respective modules
+- [ ] add PUT/update routes for assets and users
+- [ ] add params to use small projection for pagination
