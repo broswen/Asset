@@ -1,0 +1,66 @@
+create assets
+deactivate assets
+view all assets, pagination
+filter assets by category
+filter assets by status
+search assets by name
+
+create users
+deactive users
+view all users, pagination
+search users by name
+view assets by user
+view events by user
+
+create bundle, with assets
+add assets to bundle
+remove asset from bundle
+remove assets from bundle
+view all bundles, pagination
+search bundles by name
+
+view all events, pagination
+sort/filter by date/time
+filter by event type
+
+
+asset
+{
+    id: "A#123",
+    name: "dell laptop",
+    category: "hardware",
+    tags: ["laptop", "computer"],
+    description: "A dell laptop",
+    bundle: "B#456",
+    status: "IN",
+    user: null,
+    barcode: 1231234234
+}
+
+bundle 
+{
+    id: "B#456",
+    name: "user work bundle",
+    assets: [ "A#123", "A#643],
+}
+
+user
+{
+    id: "U#924",
+    name: "Brad Swenson",
+    title: "developer",
+    status: "ACTIVE"
+}
+
+event
+{
+    id: "E#523",
+    event: "asset check out",
+    date: 2021-02-20T12:00:00
+    asset: {
+        id: "A#123",
+        category: "hardware",
+        tags: ["laptop", "computer"],
+    },
+    user: "U#934"
+}
