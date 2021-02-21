@@ -14,6 +14,7 @@ class AssetService {
         //insert into mongodb
         const newAsset = await a.save();
         //return asset with id
+        this.eventService.createEvent('CREATE', 'ASSET', newAsset._id);
         return newAsset;
     }
 
@@ -21,6 +22,7 @@ class AssetService {
         //deleteOne from mongodb by id
         const asset = await Asset.findByIdAndDelete(id);
         //return deleted asset
+        this.eventService.createEvent('DELETE', 'ASSET', asset._id);
         return asset;
     }
 

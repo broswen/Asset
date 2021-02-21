@@ -12,6 +12,7 @@ class UserService {
         const u = new User(user);
         //insert into mongodb
         const newUser = await u.save();
+        this.eventService.createEvent('CREATE', 'USER', newUser._id);
         //return user with id
         return newUser;
     }
@@ -19,6 +20,7 @@ class UserService {
     async deleteUser(id) {
         //deleteOne from mongodb by id
         const user = await User.findByIdAndDelete(id);
+        this.eventService.createEvent('DELETE', 'USER', user._id);
         //return number of items deleted
         return user;
     }

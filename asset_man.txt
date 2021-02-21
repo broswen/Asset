@@ -5,12 +5,12 @@ DONE filter assets by category
 DONE filter assets by status
 DONE search assets by name
 
-create users POST /user
-deactive users DELETE /user/id
-view all users, pagination GET /user
-search users by name
-view assets by user GET /asset?user=123
-view events by user GET /events?user=123
+DONE create users POST /user
+DONE delete users DELETE /user/id
+DONE view all users, pagination GET /user
+DONE search users by name
+view assets by user GET /user/id/assets
+view events by user GET /user/id/assets
 
 create bundle, with assets POST /bundle
 add assets to bundle PUT /bundle
@@ -19,9 +19,9 @@ remove asset from bundle DELETE /bundle/assets/id
 view all bundles, pagination GET /bundle
 search bundles by name
 
-view all events, pagination GET /events
-sort/filter by date/time
-filter by event type
+DONE view all events, pagination GET /events
+DONE sort/filter by date/time
+DONE filter by event type
 
 asset
 {

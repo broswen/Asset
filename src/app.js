@@ -6,6 +6,7 @@ const { body, query, validationResult } = require('express-validator');
 const { port, mongoURL } = require('./config/configuration');
 const AssetService = require('./services/AssetService');
 const UserService = require('./services/UserService');
+const EventService = require('./services/EventService');
 
 const app = express();
 
@@ -14,9 +15,9 @@ app.use(express.json());
 mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true });
 this.db = mongoose.connection;
 
-//TODO inject event service
-const assetService = new AssetService(null);
-const userService = new UserService(null);
+const eventService = new EventService();
+const assetService = new AssetService(eventService);
+const userService = new UserService(eventService);
 
 app.post('/asset',
     body('name').isString().isLength({ min: 1, max: 256 }),
@@ -84,6 +85,92 @@ app.delete('/asset/:id', async (req, res) => {
     res.send(asset);
 });
 
+//user routes
+
+app.post('/user',
+    body('name').isString().isLength({ min: 1, max: 256 }),
+    body('title').isString().isLength({ min: 1, max: 256 }),
+    async (req, res) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        req.body.created = new Date();
+        req.body.status = 'ACTIVE';
+
+        const user = await userService.createUser(req.body);
+
+        res.send(user);
+    }
+);
+
+app.get('/user',
+    query('page').isInt().optional(),
+    query('amount').isInt().optional(),
+    query('name').isString().optional(),
+    async (req, res) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        const page = parseInt(req.query.page);
+        const amount = parseInt(req.query.amount);
+        const name = req.query.name;
+
+        const users = await userService.getUsers(page, amount, name);
+
+        res.send(users);
+    }
+);
+
+app.get('/user/:id', async (req, res) => {
+    const id = req.params.id;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).send('invalid id');
+    }
+    const user = await userService.getUserById(id);
+    res.send(user);
+});
+
+app.delete('/user/:id', async (req, res) => {
+    const id = req.params.id;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).send('invalid id');
+    }
+    const asset = await userService.deleteUser(id);
+    res.send(asset);
+});
+
+//event routes
+
+app.get('/event',
+    query('page').isInt().optional(),
+    query('amount').isInt().optional(),
+    query('eType').isString().optional(),
+    query('oType').isString().optional(),
+    query('sDate').isISO8601().toDate().optional(),
+    query('eDate').isISO8601().toDate().optional(),
+    async (req, res) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        const page = parseInt(req.query.page);
+        const amount = parseInt(req.query.amount);
+        const eventType = req.query.eType;
+        const objectType = req.query.oType;
+        const startDate = req.query.sDate;
+        const endDate = req.query.eDate;
+
+        const users = await eventService.getEvents(page, amount, eventType, objectType, startDate, endDate);
+
+        res.send(users);
+    }
+);
 
 app.listen(port, () => {
     console.log(`listening on ${port}`);
