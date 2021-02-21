@@ -1,28 +1,27 @@
-create assets
-deactivate assets
-view all assets, pagination
-filter assets by category
-filter assets by status
-search assets by name
+DONE create assets POST /asset
+DONE delete assets DELETE /asset/id
+DONE view all assets, pagination GET /asset
+DONE filter assets by category
+DONE filter assets by status
+DONE search assets by name
 
-create users
-deactive users
-view all users, pagination
+create users POST /user
+deactive users DELETE /user/id
+view all users, pagination GET /user
 search users by name
-view assets by user
-view events by user
+view assets by user GET /asset?user=123
+view events by user GET /events?user=123
 
-create bundle, with assets
-add assets to bundle
-remove asset from bundle
-remove assets from bundle
-view all bundles, pagination
+create bundle, with assets POST /bundle
+add assets to bundle PUT /bundle
+remove bundle DELETE /bundle/id
+remove asset from bundle DELETE /bundle/assets/id
+view all bundles, pagination GET /bundle
 search bundles by name
 
-view all events, pagination
+view all events, pagination GET /events
 sort/filter by date/time
 filter by event type
-
 
 asset
 {
