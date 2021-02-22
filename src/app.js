@@ -48,6 +48,7 @@ app.get('/asset',
     query('c').isAlphanumeric().optional(),
     query('s').isAlphanumeric().optional(),
     query('name').isString().optional(),
+    query('min').isBoolean().optional(),
     async (req, res) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -59,8 +60,9 @@ app.get('/asset',
         const category = req.query.c;
         const status = req.query.s;
         const name = req.query.name;
+        const min = req.query.min === 'true';
 
-        const assets = await assetService.getAssets(page, amount, category, status, name);
+        const assets = await assetService.getAssets(page, amount, category, status, name, min);
 
         res.send(assets);
     }
@@ -74,6 +76,28 @@ app.get('/asset/:id', async (req, res) => {
     const asset = await assetService.getAssetById(id);
     res.send(asset);
 });
+
+app.put('/asset/:id',
+    body('name').isString().isLength({ min: 1, max: 256 }).optional(),
+    body('description').isString().isLength({ min: 1, max: 256 }).optional(),
+    body('category').isString().isLength({ min: 1, max: 256 }).optional(),
+    body('status').isString().isLength({ min: 1, max: 256 }).optional(),
+    body('user').isString().isLength({ min: 1, max: 256 }).optional(),
+    async (req, res) => {
+        const id = req.params.id;
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).send('invalid id');
+        }
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        const asset = await assetService.updateAssetById(id, req.body);
+        res.send(asset);
+    }
+);
 
 app.delete('/asset/:id', async (req, res) => {
     const id = req.params.id;
@@ -105,10 +129,31 @@ app.post('/user',
     }
 );
 
+app.put('/user/:id',
+    body('name').isString().isLength({ min: 1, max: 256 }).optional(),
+    body('title').isString().isLength({ min: 1, max: 256 }).optional(),
+    body('status').isString().isLength({ min: 1, max: 256 }).optional(),
+    async (req, res) => {
+        const id = req.params.id;
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).send('invalid id');
+        }
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        const user = await userService.updateUserById(id, req.body);
+        res.send(user);
+    }
+);
+
 app.get('/user',
     query('page').isInt().optional(),
     query('amount').isInt().optional(),
     query('name').isString().optional(),
+    query('min').isBoolean().optional(),
     async (req, res) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -118,8 +163,9 @@ app.get('/user',
         const page = parseInt(req.query.page);
         const amount = parseInt(req.query.amount);
         const name = req.query.name;
+        const min = req.query.min === 'true';
 
-        const users = await userService.getUsers(page, amount, name);
+        const users = await userService.getUsers(page, amount, name, min);
 
         res.send(users);
     }

@@ -33,7 +33,7 @@ class AssetService {
         return asset;
     }
 
-    async getAssets(page = 0, amount = 25, category, status, name) {
+    async getAssets(page = 0, amount = 25, category, status, name, min = true) {
         //paginate all assets, sort by created date
         //if category is not empty, filter category 
         //find and skip page*amount items
@@ -42,11 +42,21 @@ class AssetService {
         if (status) filter.status = status;
         if (name) filter.name = new RegExp(name, 'i');
 
-        const assets = await Asset.find(filter)
+        let projection = min ? { name: 1, category: 1, status: 1, created: 1 } : {};
+
+        const assets = await Asset.find(filter, projection)
             .sort({ created: 'desc' })
             .skip(page * amount)
             .limit(amount).exec();
         return assets;
+    }
+
+    async updateAssetById(id, doc) {
+        const asset = await Asset.findByIdAndUpdate(id, doc, { new: true });
+
+        this.eventService.createEvent('UPDATE', 'ASSET', asset._id);
+
+        return asset;
     }
 }
 

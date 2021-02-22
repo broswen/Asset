@@ -32,17 +32,27 @@ class UserService {
         return user;
     }
 
-    async getUsers(page, amount = 25, name) {
+    async getUsers(page, amount = 25, name, min = true) {
         //paginate all users, sort by name
         //find and skip page*amount items
         let filter = {};
         if (name) filter.name = new RegExp(name, 'i');
 
-        const users = await User.find(filter)
+        let projection = min ? { name: 1, title: 1, status: 1 } : {};
+
+        const users = await User.find(filter, projection)
             .sort({ name: 'asc' })
             .skip(page * amount)
             .limit(amount).exec();
         return users;
+    }
+
+    async updateUserById(id, doc) {
+        const user = await User.findByIdAndUpdate(id, doc, { new: true });
+
+        this.eventService.createEvent('UPDATE', 'USER', user._id);
+
+        return user;
     }
 }
 
