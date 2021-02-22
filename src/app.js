@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const { body, query, validationResult } = require('express-validator');
 
 
-const { port, mongoURL } = require('./config/configuration');
+const { port, mongoURL, dbName } = require('./config/configuration');
 const AssetService = require('./services/AssetService');
 const UserService = require('./services/UserService');
 const EventService = require('./services/EventService');
@@ -12,7 +12,7 @@ const app = express();
 
 app.use(express.json());
 
-mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect(mongoURL + '/' + dbName, { useNewUrlParser: true, useUnifiedTopology: true });
 this.db = mongoose.connection;
 
 const eventService = new EventService();

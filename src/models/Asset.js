@@ -2,7 +2,6 @@ const mongoose = require('mongoose');
 
 const assetSchema = new mongoose.Schema({
     name: String,
-    id: String,
     category: String,
     tags: [String],
     description: String,
