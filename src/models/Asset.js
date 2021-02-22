@@ -4,7 +4,7 @@ const assetSchema = new mongoose.Schema({
     name: String,
     id: String,
     category: String,
-    tags: Array,
+    tags: [String],
     description: String,
     bundle: String,
     status: String,

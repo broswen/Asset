@@ -23,12 +23,14 @@ app.post('/asset',
     body('name').isString().isLength({ min: 1, max: 256 }),
     body('description').isString().isLength({ min: 0, max: 256 }),
     body('category').isString().isLength({ min: 1, max: 256 }),
-    body('tags').isArray(),
+    body('tags').isArray().optional(),
     async (req, res) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
         }
+
+        if (req.body.tags === undefined) req.body.tags = [];
 
         req.body.created = new Date();
         req.body.status = 'IN';
