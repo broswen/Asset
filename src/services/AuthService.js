@@ -1,7 +1,5 @@
-const Event = require("../models/Event");
-const User = require("../models/User");
-
-class EventService {
+const Creds = require("../models/Credentials");
+class AuthService {
 
     constructor() { }
 
@@ -24,4 +22,4 @@ class EventService {
 
 }
 
-module.exports = EventService;
+module.exports = AuthService;
