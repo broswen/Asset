@@ -1,5 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const cookieParser = require('cookie-parser');
 const { body, query, validationResult } = require('express-validator');
 
 
@@ -7,10 +8,35 @@ const { port, mongoURL, dbName } = require('./config/configuration');
 const AssetService = require('./services/AssetService');
 const UserService = require('./services/UserService');
 const EventService = require('./services/EventService');
+const AuthService = require('./services/AuthService');
+
+const loggerMiddleware = async (req, res, next) => {
+    const info = {
+        method: req.method,
+        path: req.path,
+        cookies: req.cookies,
+        ip: req.ip,
+        date: new Date().toISOString()
+    };
+    next();
+};
+
+const authMiddleware = async (req, res, next) => {
+    if (!req.cookies.sessionId) {
+        return res.sendStatus(401);
+    }
+    const session = await authService.getSession(req.cookies.sessionId);
+    if (session === null) {
+        return res.sendStatus(401);
+    }
+    req.session = session;
+    next();
+};
 
 const app = express();
-
 app.use(express.json());
+app.use(cookieParser());
+app.use(loggerMiddleware);
 
 mongoose.connect(mongoURL + '/' + dbName, { useNewUrlParser: true, useUnifiedTopology: true });
 this.db = mongoose.connection;
@@ -18,16 +44,22 @@ this.db = mongoose.connection;
 const eventService = new EventService();
 const assetService = new AssetService(eventService);
 const userService = new UserService(eventService);
+const authService = new AuthService();
 
 app.post('/asset',
     body('name').isString().isLength({ min: 1, max: 256 }),
     body('description').isString().isLength({ min: 0, max: 256 }),
     body('category').isString().isLength({ min: 1, max: 256 }),
     body('tags').isArray().optional(),
+    authMiddleware,
     async (req, res) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
+        }
+
+        if (!req.session.perms.includes('admin')) {
+            return res.sendStatus(401);
         }
 
         if (req.body.tags === undefined) req.body.tags = [];
@@ -85,6 +117,7 @@ app.put('/asset/:id',
     body('category').isString().isLength({ min: 1, max: 256 }).optional(),
     body('status').isString().isLength({ min: 1, max: 256 }).optional(),
     body('user').isString().isLength({ min: 1, max: 256 }).optional(),
+    authMiddleware,
     async (req, res) => {
         const id = req.params.id;
         if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -96,26 +129,41 @@ app.put('/asset/:id',
             return res.status(400).json({ errors: errors.array() });
         }
 
+        if (!req.session.perms.includes('admin')) {
+            return res.sendStatus(401);
+        }
+
         const asset = await assetService.updateAssetById(id, req.body);
         res.send(asset);
     }
 );
 
-app.delete('/asset/:id', async (req, res) => {
-    const id = req.params.id;
+app.delete('/asset/:id',
+    authMiddleware,
+    async (req, res) => {
+        const id = req.params.id;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).send('invalid id');
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).send('invalid id');
+        }
+
+        if (!req.session.perms.includes('admin')) {
+            return res.sendStatus(401);
+        }
+
+        const asset = await assetService.deleteAssetById(id);
+        res.send(asset);
     }
-    const asset = await assetService.deleteAssetById(id);
-    res.send(asset);
-});
+);
 
 //user routes
 
 app.post('/user',
-    body('name').isString().isLength({ min: 1, max: 256 }),
+    body('user').isString().isLength({ min: 2, max: 50 }),
+    body('name').isString().isLength({ min: 2, max: 50 }),
+    body('pass').isString().isLength({ min: 6, max: 50 }),
     body('title').isString().isLength({ min: 1, max: 256 }),
+    body('perms').isArray().optional(),
     async (req, res) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -124,10 +172,16 @@ app.post('/user',
 
         req.body.created = new Date();
         req.body.status = 'ACTIVE';
+        req.body.perms = req.body.perms ? req.body.perms : [];
 
-        const user = await userService.createUser(req.body);
+        try {
+            const user = await userService.createUser(req.body);
+        } catch (error) {
+            console.error(error);
+            return res.sendStatus(400);
+        }
 
-        res.send(user);
+        res.sendStatus(200);
     }
 );
 
@@ -135,10 +189,15 @@ app.put('/user/:id',
     body('name').isString().isLength({ min: 1, max: 256 }).optional(),
     body('title').isString().isLength({ min: 1, max: 256 }).optional(),
     body('status').isString().isLength({ min: 1, max: 256 }).optional(),
+    authMiddleware,
     async (req, res) => {
         const id = req.params.id;
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res.status(400).send('invalid id');
+        }
+
+        if (!req.session.perms.includes('admin')) {
+            return res.sendStatus(401);
         }
 
         const errors = validationResult(req);
@@ -182,15 +241,23 @@ app.get('/user/:id', async (req, res) => {
     res.send(user);
 });
 
-app.delete('/user/:id', async (req, res) => {
-    const id = req.params.id;
+app.delete('/user/:id',
+    authMiddleware,
+    async (req, res) => {
+        const id = req.params.id;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).send('invalid id');
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).send('invalid id');
+        }
+
+        if (!req.session.perms.includes('admin')) {
+            return res.sendStatus(401);
+        }
+
+        const asset = await userService.deleteUser(id);
+        res.send(asset);
     }
-    const asset = await userService.deleteUser(id);
-    res.send(asset);
-});
+);
 
 //event routes
 
@@ -201,10 +268,15 @@ app.get('/event',
     query('oType').isString().optional(),
     query('sDate').isISO8601().toDate().optional(),
     query('eDate').isISO8601().toDate().optional(),
+    authMiddleware,
     async (req, res) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
+        }
+
+        if (!req.session.perms.includes('admin')) {
+            return res.sendStatus(401);
         }
 
         const page = parseInt(req.query.page);
@@ -217,6 +289,29 @@ app.get('/event',
         const users = await eventService.getEvents(page, amount, eventType, objectType, startDate, endDate);
 
         res.send(users);
+    }
+);
+
+//auth routes
+
+app.post('/login',
+    body('user').isString().isLength({ min: 2, max: 50 }),
+    body('pass').isString().isLength({ min: 6, max: 50 }),
+    async (req, res) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        let session;
+        try {
+            session = await authService.login(req.body.user, req.body.pass);
+        } catch (error) {
+            console.error(error);
+            res.sendStatus(400);
+        }
+
+        res.cookie('sessionId', session._id, { httpOnly: true }).sendStatus(200);
     }
 );
 

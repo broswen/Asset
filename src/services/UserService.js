@@ -1,4 +1,6 @@
 const User = require("../models/User");
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
 
 class UserService {
 
@@ -7,13 +9,25 @@ class UserService {
     }
 
     async createUser(user) {
-        //already validated
-        //create model
+
+        const existingUser = await User.findOne({ user: user.user });
+        if (existingUser !== null) {
+            throw new Error('that user already exists');
+        }
+
+        try {
+            const encryptedPass = await bcrypt.hash(user.pass, saltRounds);
+            user.pass = encryptedPass;
+        } catch (error) {
+            console.error(error);
+            throw new Error('error encrypting pass');
+        }
+
         const u = new User(user);
-        //insert into mongodb
+
         const newUser = await u.save();
         this.eventService.createEvent('CREATE', 'USER', newUser._id);
-        //return user with id
+
         return newUser;
     }
 

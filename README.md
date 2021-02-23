@@ -13,7 +13,10 @@ Searching by name and pagination for Users and Assets.
 - [ ] split routes into respective modules
 - [x] add PUT/update routes for assets and users
 - [x] add params to use small projection for pagination
-- [ ] add login and auth routes
-- [ ] add login and jwt cookie
-- [ ] create jwt auth middleware, check claims
-- [ ] create access loggin middleware. log ip, route, jwt, date
+- [x] add login and auth routes
+- [x] add login and session
+- [x] create auth middleware, put session into req
+- [x] create access logging middleware. log ip, route, sessionId, date
+- [ ] use text index for name/description searching
+- [ ] add/remove some trycatch and cleanup thrown errors
+- [ ] add logout route, remove session and clear cookie
