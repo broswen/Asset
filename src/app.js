@@ -165,6 +165,7 @@ app.post('/user',
     body('pass').isString().isLength({ min: 6, max: 50 }),
     body('title').isString().isLength({ min: 1, max: 256 }),
     body('perms').isArray().optional(),
+    authMiddleware(['admin']),
     async (req, res) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
