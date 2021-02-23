@@ -18,10 +18,11 @@ const loggerMiddleware = async (req, res, next) => {
         ip: req.ip,
         date: new Date().toISOString()
     };
+    console.log(info);
     next();
 };
 
-const authMiddleware = async (req, res, next) => {
+const authMiddleware = (perms = []) => (async (req, res, next) => {
     if (!req.cookies.sessionId) {
         return res.sendStatus(401);
     }
@@ -29,9 +30,21 @@ const authMiddleware = async (req, res, next) => {
     if (session === null) {
         return res.sendStatus(401);
     }
+
     req.session = session;
+
+    if (perms.length > 0) {
+        let flag = false;
+        for (let p of perms) {
+            if (session.perms.includes(p)) {
+                flag = true;
+                break;
+            }
+        }
+        if (!flag) return res.sendStatus(401);
+    }
     next();
-};
+});
 
 const app = express();
 app.use(express.json());
@@ -51,15 +64,11 @@ app.post('/asset',
     body('description').isString().isLength({ min: 0, max: 256 }),
     body('category').isString().isLength({ min: 1, max: 256 }),
     body('tags').isArray().optional(),
-    authMiddleware,
+    authMiddleware(['admin']),
     async (req, res) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
-        }
-
-        if (!req.session.perms.includes('admin')) {
-            return res.sendStatus(401);
         }
 
         if (req.body.tags === undefined) req.body.tags = [];
@@ -117,7 +126,7 @@ app.put('/asset/:id',
     body('category').isString().isLength({ min: 1, max: 256 }).optional(),
     body('status').isString().isLength({ min: 1, max: 256 }).optional(),
     body('user').isString().isLength({ min: 1, max: 256 }).optional(),
-    authMiddleware,
+    authMiddleware(['admin']),
     async (req, res) => {
         const id = req.params.id;
         if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -129,26 +138,18 @@ app.put('/asset/:id',
             return res.status(400).json({ errors: errors.array() });
         }
 
-        if (!req.session.perms.includes('admin')) {
-            return res.sendStatus(401);
-        }
-
         const asset = await assetService.updateAssetById(id, req.body);
         res.send(asset);
     }
 );
 
 app.delete('/asset/:id',
-    authMiddleware,
+    authMiddleware(['admin']),
     async (req, res) => {
         const id = req.params.id;
 
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res.status(400).send('invalid id');
-        }
-
-        if (!req.session.perms.includes('admin')) {
-            return res.sendStatus(401);
         }
 
         const asset = await assetService.deleteAssetById(id);
@@ -189,15 +190,11 @@ app.put('/user/:id',
     body('name').isString().isLength({ min: 1, max: 256 }).optional(),
     body('title').isString().isLength({ min: 1, max: 256 }).optional(),
     body('status').isString().isLength({ min: 1, max: 256 }).optional(),
-    authMiddleware,
+    authMiddleware(['admin']),
     async (req, res) => {
         const id = req.params.id;
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res.status(400).send('invalid id');
-        }
-
-        if (!req.session.perms.includes('admin')) {
-            return res.sendStatus(401);
         }
 
         const errors = validationResult(req);
@@ -242,16 +239,12 @@ app.get('/user/:id', async (req, res) => {
 });
 
 app.delete('/user/:id',
-    authMiddleware,
+    authMiddleware(['admin']),
     async (req, res) => {
         const id = req.params.id;
 
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res.status(400).send('invalid id');
-        }
-
-        if (!req.session.perms.includes('admin')) {
-            return res.sendStatus(401);
         }
 
         const asset = await userService.deleteUser(id);
@@ -268,15 +261,11 @@ app.get('/event',
     query('oType').isString().optional(),
     query('sDate').isISO8601().toDate().optional(),
     query('eDate').isISO8601().toDate().optional(),
-    authMiddleware,
+    authMiddleware(['admin']),
     async (req, res) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
-        }
-
-        if (!req.session.perms.includes('admin')) {
-            return res.sendStatus(401);
         }
 
         const page = parseInt(req.query.page);
