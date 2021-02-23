@@ -41,7 +41,7 @@ const authMiddleware = (perms = []) => (async (req, res, next) => {
                 break;
             }
         }
-        if (!flag) return res.sendStatus(401);
+        if (!flag) return res.sendStatus(403);
     }
     next();
 });
