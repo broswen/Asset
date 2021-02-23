@@ -9,42 +9,8 @@ const AssetService = require('./services/AssetService');
 const UserService = require('./services/UserService');
 const EventService = require('./services/EventService');
 const AuthService = require('./services/AuthService');
-
-const loggerMiddleware = async (req, res, next) => {
-    const info = {
-        method: req.method,
-        path: req.path,
-        cookies: req.cookies,
-        ip: req.ip,
-        date: new Date().toISOString()
-    };
-    console.log(info);
-    next();
-};
-
-const authMiddleware = (perms = []) => (async (req, res, next) => {
-    if (!req.cookies.sessionId) {
-        return res.sendStatus(401);
-    }
-    const session = await authService.getSession(req.cookies.sessionId);
-    if (session === null) {
-        return res.sendStatus(401);
-    }
-
-    req.session = session;
-
-    if (perms.length > 0) {
-        let flag = false;
-        for (let p of perms) {
-            if (session.perms.includes(p)) {
-                flag = true;
-                break;
-            }
-        }
-        if (!flag) return res.sendStatus(403);
-    }
-    next();
-});
+const loggerMiddleware = require('./middleware/Logger');
+const authMiddleware = require('./middleware/Auth');
 
 const app = express();
 app.use(express.json());
