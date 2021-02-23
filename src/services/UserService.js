@@ -41,7 +41,7 @@ class UserService {
 
     async getUserById(id) {
         //findOne from mongodb by id
-        const user = await User.findById(id);
+        const user = await User.findById(id, { pass: 0 });
         //return user
         return user;
     }
@@ -52,7 +52,7 @@ class UserService {
         let filter = {};
         if (name) filter.name = new RegExp(name, 'i');
 
-        let projection = min ? { name: 1, title: 1, status: 1 } : {};
+        let projection = min ? { name: 1, title: 1, status: 1, pass: 0 } : { pass: 0 };
 
         const users = await User.find(filter, projection)
             .sort({ name: 'asc' })

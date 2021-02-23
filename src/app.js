@@ -297,7 +297,7 @@ app.post('/login',
             session = await authService.login(req.body.user, req.body.pass);
         } catch (error) {
             console.error(error);
-            res.sendStatus(400);
+            res.sendStatus(401);
         }
 
         res.cookie('sessionId', session._id, { httpOnly: true }).sendStatus(200);
